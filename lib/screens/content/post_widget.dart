@@ -1,5 +1,9 @@
 import "package:android_dev/screens/home_screen/models/post_model.dart";
-import "package:flutter/material.dart";
+import "package:flutter/material.dart"; 
+
+import "package:android_dev/screens/home_screen/models/comment_model.dart";
+import "package:android_dev/screens/home_screen/services/post_services.dart"; 
+import 'package:android_dev/screens/content/comment_widget.dart';
 
 class PostWidget extends StatefulWidget {
   final PostModel? post;
@@ -13,19 +17,110 @@ class _PostWidgetState extends State<PostWidget> {
   final bool isLiked = false; 
  // This should ideally be managed by state management
 
- void openBottomSheet() {
-    showModalBottomSheet(
+  void openBottomSheet() async {
+
+    final post = widget.post;
+
+    if (post == null) return;
+
+    final TextEditingController commentController =
+        TextEditingController();
+
+    await showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+
       builder: (BuildContext context) {
-        return Container(
-          height: 200,
-          color: Colors.white,
-          child: Center(
-            child: Text('Bottom Sheet Content'),
-          ),
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+
+            return SafeArea(
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.7,
+
+                child: Column(
+                  children: [
+
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'Comments',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: post.comments.length,
+
+                        itemBuilder: (context, index) {
+                          return CommentWidget(
+                            comment: post.comments[index],
+                          );
+                        },
+                      ),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+
+                      child: Row(
+                        children: [
+
+                          Expanded(
+                            child: TextField(
+                              controller: commentController,
+                              decoration: const InputDecoration(
+                                hintText: 'Write a comment...',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+
+                          IconButton(
+                            icon: const Icon(Icons.send),
+
+                            onPressed: () {
+
+                              final text =
+                                  commentController.text.trim();
+
+                              if (text.isEmpty) return;
+
+                              post.addComment(
+                                CommentModel(
+                                  name: 'You',
+                                  description: text,
+                                  likeCount: 0,
+                                ),
+                              );
+
+                              commentController.clear();
+
+                              setModalState(() {});
+
+                              setState(() {});
+                            },
+                          ),
+
+                        ],
+                      ),
+                    ),
+
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
+
+    commentController.dispose();
   }
 
   @override
@@ -85,6 +180,18 @@ class _PostWidgetState extends State<PostWidget> {
                 onPressed: () {},
               ),
             ],
+          ), 
+          Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                  '${widget.post?.commentCount ?? 0} comments',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+              ),
+            ),
           ),
           Text(
             widget.post?.description ?? '',
