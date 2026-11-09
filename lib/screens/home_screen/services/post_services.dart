@@ -1,7 +1,8 @@
+
 import 'package:android_dev/screens/home_screen/models/post_model.dart';
+import 'package:android_dev/screens/home_screen/models/comment_model.dart';
 
-class PostServices{
-
+class PostServices {
   final List<PostModel> posts = [];
 
   PostServices();
@@ -11,11 +12,18 @@ class PostServices{
   }
 
   void likePost(PostModel post) {
-    post.addLike((post.likeCount ?? 0) + 1);
+    post.addLike(post.likeCount + 1);
   }
 
-  void commentOnPost(PostModel post) {
-    post.addComment((post.commentCount ?? 0) + 1);
+  void commentOnPost(PostModel post, String text) {
+    final comment = CommentModel(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      username: 'kae0961',
+      avatarUrl: 'https://i.pravatar.cc/150?img=1',
+      text: text,
+    );
+
+    post.addCommentModel(comment);
   }
 
   void batchAddPosts(List<PostModel> newPosts) {
