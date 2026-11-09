@@ -53,7 +53,7 @@ class _SearchTabState extends State<SearchTab> {
               itemCount: data.length,
               itemBuilder: (context, index) {
                 final item = data[index];
-                return ImageGridItem(imageUrl: item['thumbnail']);
+                return ImageGridItem(imageUrl: item['thumbnail'], description: item['description'], title: item['title']);
               },
             );
           }
