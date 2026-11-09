@@ -44,11 +44,16 @@ class _SearchTabState extends State<SearchTab> {
             return const Center(child: Text('No data available'));
           } else {
             final data = snapshot.data!;
-            return ListView.builder(
+            return GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 4.0,
+                mainAxisSpacing: 4.0,
+              ),
               itemCount: data.length,
               itemBuilder: (context, index) {
                 final item = data[index];
-                return ImageGridItem(imageUrl: item['thumbnail'] ?? '');
+                return ImageGridItem(imageUrl: item['thumbnail']);
               },
             );
           }
