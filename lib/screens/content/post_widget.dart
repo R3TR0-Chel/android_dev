@@ -1,3 +1,4 @@
+
 import 'package:android_dev/screens/home_screen/models/post_model.dart';
 import 'package:android_dev/screens/home_screen/models/comment_model.dart';
 import 'package:android_dev/widgets/comment_widget.dart';
@@ -23,12 +24,14 @@ class _PostWidgetState extends State<PostWidget> {
 
     if (post == null) return;
 
-    await showModalBottomSheet<void>(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.white,
-      builder: (_) => _CommentsSheet(post: post),
+      builder: (context) {
+        return CommentsBottomSheet(post: post);
+      },
     );
   }
 
@@ -57,7 +60,8 @@ class _PostWidgetState extends State<PostWidget> {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.network(
-              widget.post?.imageUrl ?? 'https://via.placeholder.com/150',
+              widget.post?.imageUrl ??
+                  'https://via.placeholder.com/150',
               width: double.infinity,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => const SizedBox(
@@ -68,6 +72,7 @@ class _PostWidgetState extends State<PostWidget> {
               ),
             ),
           ),
+
           Row(
             children: [
               IconButton(
@@ -91,21 +96,26 @@ class _PostWidgetState extends State<PostWidget> {
                   });
                 },
               ),
+
               IconButton(
                 icon: const Icon(Icons.comment),
                 onPressed: openBottomSheet,
               ),
+
               IconButton(
                 icon: const Icon(Icons.share),
                 onPressed: () {},
               ),
+
               const Spacer(),
+
               IconButton(
                 icon: const Icon(Icons.bookmark_border),
                 onPressed: () {},
               ),
             ],
           ),
+
           if (widget.post != null)
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -119,6 +129,7 @@ class _PostWidgetState extends State<PostWidget> {
                 ),
               ),
             ),
+
           if (widget.post?.description != null &&
               widget.post!.description!.isNotEmpty)
             Padding(
@@ -137,76 +148,63 @@ class _PostWidgetState extends State<PostWidget> {
   }
 }
 
-class _CommentsSheet extends StatefulWidget {
+class CommentsBottomSheet extends StatefulWidget {
   final PostModel post;
 
-  const _CommentsSheet({required this.post});
+  const CommentsBottomSheet({
+    super.key,
+    required this.post,
+  });
 
   @override
-  State<_CommentsSheet> createState() => _CommentsSheetState();
+  State<CommentsBottomSheet> createState() =>
+      _CommentsBottomSheetState();
 }
 
-class _CommentsSheetState extends State<_CommentsSheet> {
-  late final TextEditingController _controller;
-  late final FocusNode _focusNode;
-  bool _isSubmitting = false;
+class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
+  late final TextEditingController controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController();
-    _focusNode = FocusNode();
+    controller = TextEditingController();
   }
 
   @override
   void dispose() {
-    _focusNode.dispose();
-    _controller.dispose();
+    controller.dispose();
     super.dispose();
   }
 
-  Future<void> _submitComment() async {
-    if (_isSubmitting) return;
+  void sendComment() {
+    final text = controller.text.trim();
 
-    final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    final newComment = CommentModel(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      username: 'User',
+      avatarUrl: 'https://i.pravatar.cc/150?img=1',
+      text: text,
+    );
+
+    widget.post.addCommentModel(newComment);
+
     setState(() {
-      _isSubmitting = true;
+      controller.clear();
     });
-
-    try {
-      await Future<void>.sync(() {
-        widget.post.addCommentModel(
-          CommentModel(
-            id: DateTime.now().microsecondsSinceEpoch.toString(),
-            username: 'kae0961',
-            avatarUrl: 'https://i.pravatar.cc/150?img=1',
-            text: text,
-          ),
-        );
-      });
-
-      if (!mounted) return;
-      _controller.clear();
-      _focusNode.requestFocus();
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 200),
+      padding: EdgeInsets.only(bottom: bottomInset),
       child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.65,
+        height: (screenHeight - bottomInset) * 0.65,
         child: Column(
           children: [
             const Padding(
@@ -219,10 +217,14 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                 ),
               ),
             ),
+
             const Divider(height: 1),
+
             Expanded(
               child: widget.post.comments.isEmpty
-                  ? const Center(child: Text('No comments yet.'))
+                  ? const Center(
+                      child: Text('No comments yet.'),
+                    )
                   : ListView.builder(
                       itemCount: widget.post.comments.length,
                       itemBuilder: (context, index) {
@@ -232,15 +234,16 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                       },
                     ),
             ),
+
             const Divider(height: 1),
+
             Padding(
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
-                      controller: _controller,
-                      focusNode: _focusNode,
+                      controller: controller,
                       decoration: InputDecoration(
                         hintText: 'Write a comment...',
                         border: OutlineInputBorder(
@@ -251,15 +254,15 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                           vertical: 10,
                         ),
                       ),
-                      onSubmitted: (_) => _submitComment(),
                     ),
                   ),
+
                   IconButton(
                     icon: const Icon(
                       Icons.send,
                       color: Colors.blue,
                     ),
-                    onPressed: _isSubmitting ? null : _submitComment,
+                    onPressed: sendComment,
                   ),
                 ],
               ),

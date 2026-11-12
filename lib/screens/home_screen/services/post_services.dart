@@ -1,4 +1,3 @@
-
 import 'package:android_dev/screens/home_screen/models/post_model.dart';
 import 'package:android_dev/screens/home_screen/models/comment_model.dart';
 
