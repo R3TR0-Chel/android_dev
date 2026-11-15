@@ -17,6 +17,11 @@ class PostServices{
     post.addLike((post.likeCount ?? 0) + 1);
   }
 
+  void toggleLike(PostModel post) {
+    post.isLiked = !post.isLiked;
+    post.addLike((post.likeCount ?? 0) + (post.isLiked ? 1 : -1));
+  }
+
   void commentOnPost(PostModel post, CommentModel comment) {
     post.addComment(comment);
   }

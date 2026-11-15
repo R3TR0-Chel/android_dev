@@ -6,6 +6,7 @@ class PostModel {
   int? commentCount;
   final String? description;
   final List<CommentModel> comments;
+  bool isLiked = false;
 
   PostModel({
     this.imageUrl,
