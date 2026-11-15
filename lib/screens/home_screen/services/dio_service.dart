@@ -1,7 +1,10 @@
 import "package:dio/dio.dart";
 
 class DioService {
-  final Dio _dio = Dio();
+  final Dio _dio;
+
+  // Dio is passed in (dependency injection) instead of created here.
+  DioService(this._dio);
 
   Future<Map<String, dynamic>> get(String url, int limit) async {
     try {

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "screens/main_screen.dart";
 
 void main() {
-  runApp(const MainApp());
+  // ProviderScope stores the state of every provider in the app.
+  runApp(const ProviderScope(child: MainApp()));
 }
 
 class MainApp extends StatelessWidget {

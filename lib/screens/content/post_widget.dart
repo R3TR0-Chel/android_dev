@@ -1,35 +1,95 @@
+import "package:android_dev/providers/feed_provider.dart";
+import "package:android_dev/screens/home_screen/models/comment_model.dart";
 import "package:android_dev/screens/home_screen/models/post_model.dart";
+import "package:android_dev/screens/home_screen/widgets/comment_widget.dart";
 import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
 
-class PostWidget extends StatefulWidget {
-  final PostModel? post;
-  const PostWidget({super.key,required this.post});
+// No local state any more: likes and comments live in feedProvider.
+// ConsumerWidget is a StatelessWidget that also gets a `ref`.
+class PostWidget extends ConsumerWidget {
+  final PostModel post;
+  const PostWidget({super.key, required this.post});
 
-  @override
-  State<PostWidget> createState() => _PostWidgetState();
-}
-
-class _PostWidgetState extends State<PostWidget> {
-  final bool isLiked = false; 
- // This should ideally be managed by state management
-
- void openBottomSheet() {
+  void openBottomSheet(BuildContext context) {
+    final controller = TextEditingController();
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
       builder: (BuildContext context) {
-        return Container(
-          height: 200,
-          color: Colors.white,
-          child: Center(
-            child: Text('Bottom Sheet Content'),
-          ),
+        // Consumer rebuilds the sheet whenever feedProvider changes,
+        // e.g. right after a comment is added.
+        return Consumer(
+          builder: (context, ref, _) {
+            ref.watch(feedProvider);
+            final comments = post.comments;
+
+            void send() {
+              final text = controller.text.trim();
+              if (text.isEmpty) return;
+              ref.read(feedProvider.notifier).addComment(
+                    post,
+                    CommentModel(
+                      username: 'you',
+                      avatarUrl: 'https://i.pravatar.cc/150?img=68',
+                      text: text,
+                    ),
+                  );
+              controller.clear();
+            }
+
+            return Padding(
+              // Push the sheet above the keyboard.
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SizedBox(
+                height: 400,
+                child: Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text(
+                        'Comments',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      child: comments.isEmpty
+                          ? const Center(child: Text('No comments yet'))
+                          : ListView.builder(
+                              itemCount: comments.length,
+                              itemBuilder: (context, index) =>
+                                  CommentWidget(comment: comments[index]),
+                            ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: TextField(
+                        controller: controller,
+                        onSubmitted: (_) => send(),
+                        decoration: InputDecoration(
+                          hintText: 'Add a comment...',
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.send),
+                            onPressed: send,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -45,11 +105,12 @@ class _PostWidgetState extends State<PostWidget> {
       ),
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8.0),
             child: Image.network(
-              widget.post?.imageUrl ?? 'https://via.placeholder.com/150',
+              post.imageUrl ?? 'https://via.placeholder.com/150',
               width: double.infinity,
               fit: BoxFit.cover,
             ),
@@ -57,42 +118,45 @@ class _PostWidgetState extends State<PostWidget> {
           Row(
             children: [
               IconButton(
-                icon: Icon(isLiked ? Icons.favorite : Icons.favorite_border),
-                onPressed: () {
-                  setState(() {
-                    // This should ideally update the like count in a state management solution
-                    if (isLiked) {
-                      widget.post?.addLike((widget.post?.likeCount ?? 1) - 1);
-                    } else {
-                      widget.post?.addLike((widget.post?.likeCount ?? 0) + 1);
-                    }
-                  });
-                },
+                icon: Icon(
+                  post.isLiked ? Icons.favorite : Icons.favorite_border,
+                  color: post.isLiked ? Colors.red : null,
+                ),
+                // ref.read: we only call a method, we don't need to rebuild.
+                onPressed: () =>
+                    ref.read(feedProvider.notifier).toggleLike(post),
               ),
               IconButton(
                 icon: const Icon(Icons.comment),
-                onPressed: () {
-                  openBottomSheet();
-                },
+                onPressed: () => openBottomSheet(context),
               ),
               IconButton(
                 icon: const Icon(Icons.share),
                 onPressed: () {},
               ),
-              Spacer(),
+              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.bookmark_border),
                 onPressed: () {},
               ),
             ],
           ),
-          Text(
-            widget.post?.description ?? '',
-            style: const TextStyle(fontSize: 16.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '${post.likeCount ?? 0} likes',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
-
-        ],)
-
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              post.description ?? '',
+              style: const TextStyle(fontSize: 16.0),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
