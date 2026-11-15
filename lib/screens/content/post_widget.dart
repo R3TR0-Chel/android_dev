@@ -1,10 +1,10 @@
-
+import 'package:android_dev/providers/posts_provider.dart';
 import 'package:android_dev/screens/home_screen/models/post_model.dart';
-import 'package:android_dev/screens/home_screen/models/comment_model.dart';
 import 'package:android_dev/widgets/comment_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class PostWidget extends StatefulWidget {
+class PostWidget extends ConsumerStatefulWidget {
   final PostModel? post;
 
   const PostWidget({
@@ -13,10 +13,10 @@ class PostWidget extends StatefulWidget {
   });
 
   @override
-  State<PostWidget> createState() => _PostWidgetState();
+  ConsumerState<PostWidget> createState() => _PostWidgetState();
 }
 
-class _PostWidgetState extends State<PostWidget> {
+class _PostWidgetState extends ConsumerState<PostWidget> {
   bool isLiked = false;
 
   Future<void> openBottomSheet() async {
@@ -30,13 +30,32 @@ class _PostWidgetState extends State<PostWidget> {
       useSafeArea: true,
       backgroundColor: Colors.white,
       builder: (context) {
-        return CommentsBottomSheet(post: post);
+        return CommentsBottomSheet(
+          post: post,
+          onSubmit: (text) {
+            final posts = ref.read(postsProvider);
+            final index = posts.indexOf(post);
+
+            if (index == -1) return;
+
+            ref.read(postsProvider.notifier).commentOnPost(
+                  index,
+                  text,
+                );
+          },
+        );
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final post = widget.post;
+
+    if (post == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -60,16 +79,17 @@ class _PostWidgetState extends State<PostWidget> {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.network(
-              widget.post?.imageUrl ??
-                  'https://via.placeholder.com/150',
+              post.imageUrl ?? 'https://via.placeholder.com/150',
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const SizedBox(
-                height: 200,
-                child: Center(
-                  child: Icon(Icons.image_not_supported_outlined),
-                ),
-              ),
+              errorBuilder: (context, error, stackTrace) {
+                return const SizedBox(
+                  height: 200,
+                  child: Center(
+                    child: Icon(Icons.image_not_supported_outlined),
+                  ),
+                );
+              },
             ),
           ),
 
@@ -81,34 +101,30 @@ class _PostWidgetState extends State<PostWidget> {
                   color: isLiked ? Colors.red : null,
                 ),
                 onPressed: () {
+                  final posts = ref.read(postsProvider);
+                  final index = posts.indexOf(post);
+
+                  if (index == -1) return;
+
+                  ref.read(postsProvider.notifier).toggleLike(
+                        index,
+                        isLiked,
+                      );
+
                   setState(() {
-                    if (isLiked) {
-                      widget.post?.addLike(
-                        (widget.post?.likeCount ?? 1) - 1,
-                      );
-                      isLiked = false;
-                    } else {
-                      widget.post?.addLike(
-                        (widget.post?.likeCount ?? 0) + 1,
-                      );
-                      isLiked = true;
-                    }
+                    isLiked = !isLiked;
                   });
                 },
               ),
-
               IconButton(
                 icon: const Icon(Icons.comment),
                 onPressed: openBottomSheet,
               ),
-
               IconButton(
                 icon: const Icon(Icons.share),
                 onPressed: () {},
               ),
-
               const Spacer(),
-
               IconButton(
                 icon: const Icon(Icons.bookmark_border),
                 onPressed: () {},
@@ -116,29 +132,28 @@ class _PostWidgetState extends State<PostWidget> {
             ],
           ),
 
-          if (widget.post != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 2,
-              ),
-              child: Text(
-                '${widget.post!.likeCount} likes',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 2,
+            ),
+            child: Text(
+              '${post.likeCount} likes',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
               ),
             ),
+          ),
 
-          if (widget.post?.description != null &&
-              widget.post!.description!.isNotEmpty)
+          if (post.description != null &&
+              post.description!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 8,
                 vertical: 4,
               ),
               child: Text(
-                widget.post!.description!,
+                post.description!,
                 style: const TextStyle(fontSize: 16),
               ),
             ),
@@ -150,10 +165,12 @@ class _PostWidgetState extends State<PostWidget> {
 
 class CommentsBottomSheet extends StatefulWidget {
   final PostModel post;
+  final ValueChanged<String> onSubmit;
 
   const CommentsBottomSheet({
     super.key,
     required this.post,
+    required this.onSubmit,
   });
 
   @override
@@ -181,14 +198,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
     if (text.isEmpty) return;
 
-    final newComment = CommentModel(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      username: 'User',
-      avatarUrl: 'https://i.pravatar.cc/150?img=1',
-      text: text,
-    );
-
-    widget.post.addCommentModel(newComment);
+    widget.onSubmit(text);
 
     setState(() {
       controller.clear();
@@ -256,7 +266,6 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                       ),
                     ),
                   ),
-
                   IconButton(
                     icon: const Icon(
                       Icons.send,

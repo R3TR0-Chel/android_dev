@@ -1,8 +1,12 @@
+
+import 'package:android_dev/providers/posts_provider.dart';
 import 'package:android_dev/screens/content/post_widget.dart';
 import 'package:android_dev/screens/home_screen/models/post_model.dart';
 import 'package:android_dev/screens/home_screen/models/story_model.dart';
+import 'package:android_dev/screens/home_screen/services/post_services.dart';
 import 'package:android_dev/widgets/stories_list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -11,6 +15,7 @@ void main() {
   ) async {
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
+
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
@@ -35,14 +40,17 @@ void main() {
         ),
       ),
     );
+
     await tester.pump();
 
     expect(find.text('user_0'), findsOneWidget);
     expect(find.byType(ListView), findsOneWidget);
+
     expect(
       tester.widget<ListView>(find.byType(ListView)).scrollDirection,
       Axis.horizontal,
     );
+
     expect(tester.takeException(), isNull);
   });
 
@@ -53,10 +61,20 @@ void main() {
       imageUrl: 'https://example.com/post.png',
     );
 
+    final postServices = PostServices();
+    postServices.addPost(post);
+
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: PostWidget(post: post),
+      ProviderScope(
+        overrides: [
+          postServicesProvider.overrideWith(
+            (ref) => postServices,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: PostWidget(post: post),
+          ),
         ),
       ),
     );
@@ -64,12 +82,16 @@ void main() {
     await tester.tap(find.byIcon(Icons.comment));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), 'A new comment');
-    await tester.tap(find.byIcon(Icons.send));
+    await tester.enterText(
+      find.byType(TextField),
+      'A new comment',
+    );
+
     await tester.tap(find.byIcon(Icons.send));
     await tester.pumpAndSettle();
 
     expect(post.comments, hasLength(1));
+
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -78,8 +100,10 @@ void main() {
       ),
       findsOneWidget,
     );
+
     Navigator.of(tester.element(find.text('Comments'))).pop();
     await tester.pumpAndSettle();
+
     expect(tester.takeException(), isNull);
   });
 }
