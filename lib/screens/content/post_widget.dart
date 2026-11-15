@@ -1,4 +1,6 @@
+import "package:android_dev/screens/home_screen/models/comment_model.dart";
 import "package:android_dev/screens/home_screen/models/post_model.dart";
+import "package:android_dev/screens/home_screen/widgets/comment_widget.dart";
 import "package:flutter/material.dart";
 
 class PostWidget extends StatefulWidget {
@@ -14,15 +16,73 @@ class _PostWidgetState extends State<PostWidget> {
  // This should ideally be managed by state management
 
  void openBottomSheet() {
+    final comments = widget.post?.comments ?? [];
+    final controller = TextEditingController();
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
       builder: (BuildContext context) {
-        return Container(
-          height: 200,
-          color: Colors.white,
-          child: Center(
-            child: Text('Bottom Sheet Content'),
-          ),
+        // StatefulBuilder lets the sheet redraw when a comment is added.
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            void send() {
+              final text = controller.text.trim();
+              if (text.isEmpty) return;
+              setSheetState(() {
+                widget.post?.addComment(CommentModel(
+                  username: 'you',
+                  avatarUrl: 'https://i.pravatar.cc/150?img=68',
+                  text: text,
+                ));
+              });
+              controller.clear();
+            }
+
+            return Padding(
+              // Push the sheet above the keyboard.
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SizedBox(
+                height: 400,
+                child: Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text(
+                        'Comments',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Expanded(
+                      child: comments.isEmpty
+                          ? const Center(child: Text('No comments yet'))
+                          : ListView.builder(
+                              itemCount: comments.length,
+                              itemBuilder: (context, index) =>
+                                  CommentWidget(comment: comments[index]),
+                            ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: TextField(
+                        controller: controller,
+                        onSubmitted: (_) => send(),
+                        decoration: InputDecoration(
+                          hintText: 'Add a comment...',
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.send),
+                            onPressed: send,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
