@@ -1,5 +1,6 @@
 import "package:android_dev/screens/tabs/home_tab.dart";
 import "package:android_dev/screens/tabs/placeholder_tab.dart";
+import "package:android_dev/screens/tabs/search_tab.dart";
 import "package:android_dev/widgets/animated_indexed_stack.dart";
 import "package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart";
 import "package:flutter/material.dart";
@@ -24,7 +25,7 @@ class _MainScreenState extends State<MainScreen> {
 
   static const _pages = [
     HomeTab(),
-    PlaceholderTab(title: 'Search', icon: Icons.search),
+    SearchTab(),
     PlaceholderTab(title: 'New post', icon: Icons.add_box),
     PlaceholderTab(title: 'Activity', icon: Icons.favorite_border),
     PlaceholderTab(title: 'Profile', icon: Icons.person_outline),
