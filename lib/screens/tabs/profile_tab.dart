@@ -1,3 +1,4 @@
+import 'package:android_dev/screens/content/like_digest_sheet.dart';
 import 'package:android_dev/screens/home_screen/state/feed_controller.dart';
 import 'package:android_dev/screens/home_screen/services/local_data_service.dart';
 import 'package:android_dev/core/db/app_database.dart';
@@ -27,6 +28,7 @@ class ProfileTab extends ConsumerWidget {
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => _showEditProfile(context, ref, nickname, avatarUrl),
           ),
+          IconButton(onPressed: () => LikesDigestSheet.show(context), icon: Icon(Icons.notifications_rounded))
         ],
       ),
       body: posts.when(
