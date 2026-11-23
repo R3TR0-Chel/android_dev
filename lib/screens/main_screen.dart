@@ -1,9 +1,10 @@
 import "package:android_dev/screens/tabs/home_tab.dart";
-import "package:android_dev/screens/tabs/placeholder_tab.dart";
 import "package:android_dev/screens/tabs/search_tab.dart";
+import "package:android_dev/screens/tabs/profile_tab.dart";
+import "package:android_dev/screens/tabs/new_post_tab.dart";
+import "package:android_dev/screens/tabs/activity_tab.dart";
 import "package:android_dev/widgets/animated_indexed_stack.dart";
-import "package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart";
-import "package:flutter/material.dart";
+import "package:material_ui/material_ui.dart";
 
 class MainScreen extends StatefulWidget {
   const new({super.key});
@@ -15,34 +16,38 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  static const _icons = [
-    Icons.home,
-    Icons.search,
-    Icons.add_box,
-    Icons.favorite_border,
-    Icons.person_outline,
-  ];
-
   static const _pages = [
     HomeTab(),
     SearchTab(),
-    PlaceholderTab(title: 'New post', icon: Icons.add_box),
-    PlaceholderTab(title: 'Activity', icon: Icons.favorite_border),
-    PlaceholderTab(title: 'Profile', icon: Icons.person_outline),
+    NewPostTab(),
+    ActivityTab(),
+    ProfileTab(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
-      bottomNavigationBar: AnimatedBottomNavigationBar(
-        icons: _icons,
-        activeIndex: _currentIndex,
-        gapLocation: GapLocation.none,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        activeColor: Colors.black,
-        inactiveColor: Colors.grey,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
         onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box), label: 'New post'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border),
+            label: 'Activity',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+          ),
+        ],
       ),
       body: AnimatedIndexedStack(
         index: _currentIndex,

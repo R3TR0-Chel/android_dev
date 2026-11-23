@@ -1,28 +1,21 @@
-import 'package:android_dev/screens/home_screen/models/comment_model.dart';
-
 class PostModel {
-  final String? imageUrl;
-  int? likeCount;
-  int? commentCount;
-  final String? description;
-  final List<CommentModel> comments;
-  bool isLiked = false;
+  final int id;
+  final String imageUrl;
+  final String description;
+  final int authorId;
+  final String authorName;
+  final int likeCount;
+  final int commentCount;
+  final bool isLiked;
 
-  PostModel({
-    this.imageUrl,
-    this.likeCount,
-    this.commentCount,
-    this.description,
-    List<CommentModel>? comments,
-  }) : comments = comments ?? [];
-
-  void addLike(int newCount) {
-    // This method should ideally update the like count in a state management solution
-    likeCount = newCount;
-  }
-
-  void addComment(CommentModel comment) {
-    comments.add(comment);
-    commentCount = comments.length;
-  }
+  const PostModel({
+    required this.id,
+    required this.imageUrl,
+    required this.description,
+    required this.authorId,
+    required this.authorName,
+    this.likeCount = 0,
+    this.commentCount = 0,
+    this.isLiked = false,
+  });
 }

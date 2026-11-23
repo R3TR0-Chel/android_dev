@@ -1,6 +1,6 @@
 import "package:android_dev/providers/search_provider.dart";
 import "package:android_dev/widgets/image_grid_item.dart";
-import "package:flutter/material.dart";
+import "package:material_ui/material_ui.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 // Same screen as before, but the data comes from searchProvider instead of

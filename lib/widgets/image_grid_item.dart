@@ -1,5 +1,5 @@
 import "package:android_dev/screens/content_detail_screen.dart";
-import "package:flutter/material.dart";
+import "package:material_ui/material_ui.dart";
 
 class ImageGridItem extends StatelessWidget {
   final String imageUrl;
